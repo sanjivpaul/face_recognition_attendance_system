@@ -8,9 +8,12 @@ import os
 
 
 cap = cv.VideoCapture(0)
+detector = FaceDetector()
+
+# 2.graphic part
 cap.set(3, 640) #width
 cap.set(4, 480) #height
-imgBackground = cv.imread('resources/backgroundFinal2.png')
+imgBackground = cv.imread('resources/backgroundFinal.png')
 
 # importing the mode images
 modePath = 'resources/modes'
@@ -20,13 +23,8 @@ imgModeList = []
 for path in modePathList:
     imgModeList.append(cv.imread(os.path.join(modePath, path)))
 
-# print(len(imgModeList))
 
 
-detector = FaceDetector()
-
-
-# 2.graphic part
 
 # 4.Face recognition:
 # 4.1 Load the Encoding file
@@ -88,11 +86,12 @@ while True:
             name = studentIds[matchIndex]
             face_names.append(name)
 
+            # rectangle for face detection
             y1, x2, y2, x1 = faceLocation
             y1, x2, y2, x1 = y1*4, x2*4, y2*4, x1*4
             bbox = 55 + x1, 162 + y1, x2 - x1, y2- y1
             imgBackground = cvzone.cornerRect(imgBackground, bbox, rt=0) #rt = rectangle thickness
-            
+
             # # Display the results
             # for (top, right, bottom, left), name in zip(faceCurrentFrame, face_names):
             #     # Scale back up face locations since the frame we detected in was scaled to 1/4 size
