@@ -151,7 +151,7 @@ while True:
         offset = (380-w)//2
         cv.putText(imgBackground, str(studentInfo['name']), (848+offset, 415), cv.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 1)
 
-        # show profile to frame
+        # show profile to frame of webcam
         imgBackground[142:142+216, 915:915+216] = newImgFac
 
         counter += 1
