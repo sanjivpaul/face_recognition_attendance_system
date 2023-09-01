@@ -13,7 +13,7 @@ detector = FaceDetector()
 # 2.graphic part
 cap.set(3, 640) #width
 cap.set(4, 480) #height
-imgBackground = cv.imread('resources/backgroundFinal.png')
+imgBackground = cv.imread('resources/bg.png')
 
 # importing the mode images
 modePath = 'resources/modes'
@@ -46,7 +46,7 @@ while True:
     success, img = cap.read()
 
     imgBackground[162:162+480, 55:55+640] = img
-    imgBackground[35:35+640, 835:835+380] = imgModeList[1]
+    imgBackground[35:35+640, 835:835+380] = imgModeList[2]
     img, bboxs = detector.findFaces(img)
 
     if bboxs:
