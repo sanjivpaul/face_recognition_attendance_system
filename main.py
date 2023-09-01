@@ -5,6 +5,7 @@ import face_recognition
 import numpy as np
 import cvzone
 import os
+from datetime import datetime
 
 
 # 8.1: for real time database update
@@ -85,78 +86,134 @@ while True:
     encodeCurrentFrame = face_recognition.face_encodings(
         imgSmall, faceCurrentFrame)
 
-    # 4.5 compare generated encodings with existing encodings
-    # zip will iterate both list at same time
-    for encodeFace, faceLocation in zip(encodeCurrentFrame, faceCurrentFrame):
-        # 4.6 find matches
-        matches = face_recognition.compare_faces(
-            encodeListKnown, encodeFace)  # return true/false
+    if faceCurrentFrame:
+        # 4.5 compare generated encodings with existing encodings
+        # zip will iterate both list at same time
+        for encodeFace, faceLocation in zip(encodeCurrentFrame, faceCurrentFrame):
+            # 4.6 find matches
+            matches = face_recognition.compare_faces(
+                encodeListKnown, encodeFace)  # return true/false
 
-        # lower the distance better the match
-        faceDis = face_recognition.face_distance(encodeListKnown, encodeFace)
+            # lower the distance better the match
+            faceDis = face_recognition.face_distance(
+                encodeListKnown, encodeFace)
 
-        print("matches:", matches)
-        print("faceDistance:", faceDis)
+            print("matches:", matches)
+            print("faceDistance:", faceDis)
 
-        # 4.7 get index of list value
-        matchIndex = np.argmin(faceDis)  # minimum index value of a list
-        print("best Match:", matchIndex)
+            # 4.7 get index of list value
+            matchIndex = np.argmin(faceDis)  # minimum index value of a list
+            print("best Match:", matchIndex)
 
-        # match index
-        if matches[matchIndex]:
-            # print("known face detected")
-            # print(studentIds[matchIndex])
-            id = studentIds[matchIndex]
-            # face_names.append(id)
-            print(id)
+            # match index
+            if matches[matchIndex]:
+                # print("known face detected")
+                # print(studentIds[matchIndex])
+                id = studentIds[matchIndex]
+                # face_names.append(id)
+                # print(id)
 
-            # rectangle for face detection
-            y1, x2, y2, x1 = faceLocation
-            y1, x2, y2, x1 = y1*4, x2*4, y2*4, x1*4
-            bbox = 55 + x1, 162 + y1, x2 - x1, y2 - y1
-            imgBackground = cvzone.cornerRect(
-                imgBackground, bbox, rt=0)  # rt = rectangle thickness
 
-            # 8.4: logic for modeType
-            if counter == 0:
-                counter = 1
-                modeType = 1
+                # rectangle for face detection
+                y1, x2, y2, x1 = faceLocation
+                y1, x2, y2, x1 = y1*4, x2*4, y2*4, x1*4
+                bbox = 55 + x1, 162 + y1, x2 - x1, y2 - y1
+                imgBackground = cvzone.cornerRect(
+                    imgBackground, bbox, rt=0)  # rt = rectangle thickness
 
-    # if counter not 0
-    if counter != 0:
+                # 8.4: logic for modeType
+                if counter == 0:
+                    cvzone.putTextRect(imgBackground, "Loading", (275, 400))
+                    cv.imshow("Face Attendance", imgBackground)
+                    cv.waitKey(1)
+                    counter = 1
+                    modeType = 1
 
-        # 8.5: first frame if counter == 1 then download & show student info
-        if counter == 1:
-            # get the info
-            studentInfo = db.reference(f'Students/{id}').get()
-            print(studentInfo)
+        # if counter not 0
+        if counter != 0:
 
-            # get the image from storage
-            blob = bucket.get_blob(f'images/{id}.png')
-            arr = np.frombuffer(blob.download_as_string(), np.uint8)
-            imgFaculty = cv.imdecode(arr, cv.COLOR_BGRA2BGR)
-            newImgFac = cv.resize(imgFaculty, (216, 216))
+            # 8.5: first frame if counter == 1 then download & show student info
+            if counter == 1:
+                # 9.1get the info
+                studentInfo = db.reference(f'Students/{id}').get()
+                print(studentInfo)
 
-            # update data of attaindence 
-            
+                # 9.3:get the image from storage fetch image
+                blob = bucket.get_blob(f'images/{id}.png')
+                arr = np.frombuffer(blob.download_as_string(), np.uint8)
+                imgFaculty = cv.imdecode(arr, cv.COLOR_BGRA2BGR)
+                newImgFac = cv.resize(imgFaculty, (216, 216))
 
-        cv.putText(imgBackground, str(studentInfo['total_attendance']), (858, 110), cv.FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
-        
-        cv.putText(imgBackground, str(studentInfo['class_Roll_No']), (858, 475), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
-        cv.putText(imgBackground, str(studentInfo['year']), (858, 505), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
-        cv.putText(imgBackground, str(studentInfo['session']), (858, 535), cv.FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+                # 9.4: update data of attendance
+                datetimeObject = datetime.strptime(
+                    studentInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
 
-        # center name
-        (w, h), _ = cv.getTextSize(studentInfo['name'], cv.FONT_HERSHEY_COMPLEX, 1, 1)
-        offset = (380-w)//2
-        cv.putText(imgBackground, str(studentInfo['name']), (848+offset, 415), cv.FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 1)
+                # 9.5: secondsElapsed = (currentTime - lastAttendanceTime )
+                secondsElapsed = (
+                    datetime.now()-datetimeObject).total_seconds()
+                print(secondsElapsed)
 
-        # show profile to frame of webcam
-        imgBackground[142:142+216, 915:915+216] = newImgFac
+                # 9.7: after 30 seconds later it will take attendance again
+                if secondsElapsed > 30:
 
-        counter += 1
+                    # 9.2:update total attendance
+                    ref = db.reference(f'Students/{id}')
+                    studentInfo['total_attendance'] += 1  # increament by 1
+                    ref.child('total_attendance').set(
+                        studentInfo['total_attendance'])
 
-        # face_names.append(name)
+                    # 9.6: update last attendance time
+                    ref.child("last_attendance_time").set(
+                        datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+                else:
+                    modeType = 3
+                    counter = 0
+                    imgBackground[35:35+640, 835:835 +
+                                  380] = imgModeList[modeType]
+
+            if modeType != 3:
+
+                if 10 < counter < 20:
+                    modeType = 2
+
+                imgBackground[35:35+640, 835:835 +
+                                  380] = imgModeList[modeType]
+
+                if counter <= 10:
+                    cv.putText(imgBackground, str(studentInfo['total_attendance']), (
+                        858, 110), cv. FONT_HERSHEY_SIMPLEX, 1, (255, 255, 255), 1)
+
+                    cv.putText(imgBackground, str(
+                        studentInfo['class_Roll_No']), (858, 475), cv.    FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+                    cv.putText(imgBackground, str(
+                        studentInfo['year']), (858, 505), cv. FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+                    cv.putText(imgBackground, str(
+                        studentInfo['session']), (858, 535), cv.  FONT_HERSHEY_SIMPLEX, 1, (0, 0, 0), 1)
+
+                    # center name
+                    (w, h), _ = cv.getTextSize(
+                        studentInfo['name'], cv.FONT_HERSHEY_COMPLEX, 1, 1)
+                    offset = (380-w)//2
+                    cv.putText(imgBackground, str(
+                        studentInfo['name']), (848+offset, 415), cv.  FONT_HERSHEY_SIMPLEX, 1, (50, 50, 50), 1)
+
+                    # show profile to frame of webcam
+                    imgBackground[142:142+216, 915:915+216] = newImgFac
+
+                counter += 1
+
+                # reset all the value
+                if counter >= 20:
+                    counter = 0
+                    modeType = 0
+                    studentInfo = []
+                    newImgFac = []
+                    imgBackground[35:35+640, 835:835 +
+                                  380] = imgModeList[modeType]
+
+    else:
+        modeType = 0
+        counter = 0
 
     # cv.imshow("Face Attendance", img)
     cv.imshow("Face Attendance", imgBackground)

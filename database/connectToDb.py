@@ -14,6 +14,14 @@ firebase_admin.initialize_app(cred, {
 ref = db.reference("Students")
 
 data = {
+     "MCA00122": {
+        "name": "Elon Musk",
+        "class_Roll_No": "MCA/009/22",
+        "session": "2022 - 2024",
+        "total_attendance": 13,
+        "year": 1,
+        "last_attendance_time": "2023-08-29 10:15:00"
+    },
     "MCA00922": {
         "name": "Barkha Keshri",
         "class_Roll_No": "MCA/009/22",
@@ -36,3 +44,5 @@ data = {
 # 6.2: send or insert data into db
 for key, value in data.items():
     ref.child(key).set(value) 
+
+print("data inserted successfully!..")
