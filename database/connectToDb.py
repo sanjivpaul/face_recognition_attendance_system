@@ -63,6 +63,14 @@ data = {
         "last_attendance_time": "2023-08-29 10:15:00",
         "gender":"male"
     },
+    "ECE01" : {
+        "name": "Prof. Rahul Ranjan",
+        "total_attendance":5,
+        "dept":"ECE",
+        "designation":"Asst Prof",
+        "last_attendance_time": "2023-08-29 10:15:00",
+        "gender":"male"
+    },
 
 }
 

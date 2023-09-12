@@ -173,13 +173,16 @@ while True:
                     datetimeObject = datetime.strptime(
                         facultyInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
 
+                    # datetimeObject = datetime.strptime(
+                    #     studentInfo['last_attendance_time'], "%Y-%m-%d %H:%M:%S")
+
                     # 9.5: secondsElapsed = (currentTime - lastAttendanceTime )
                     secondsElapsed = (
                         datetime.now()-datetimeObject).total_seconds()
                     # print(secondsElapsed)
 
                     # 9.7: after 30 seconds later it will take attendance again
-                    if secondsElapsed > 30:
+                    if secondsElapsed > 60:
 
                         # # 9.2:update total attendance
                         # ref = db.reference(f'Students/{id}')
@@ -193,14 +196,27 @@ while True:
                         ref.child('total_attendance').set(
                             facultyInfo['total_attendance'])
 
+                        # # 9.2.1:update total attendance of faculty
+                        # ref = db.reference(f'Faculty/{id}')
+                        # studentInfo['total_attendance'] += 1  # increament by 1
+                        # ref.child('total_attendance').set(
+                        #     studentInfo['total_attendance'])
+
                         # 9.6: update last attendance time
                         ref.child("last_attendance_time").set(
                             datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+
                     else:
                         modeType = 3
                         counter = 0
                         imgBackground[35:35+640, 835:835 +
                                       380] = imgModeList[modeType]
+
+                    # after 1 minute if face is recognize then user is exited
+                    if secondsElapsed > 60:
+                        ref = db.reference(f'Faculty/{id}')
+                        ref.child("exitedAt").set(
+                            datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
 
                 if modeType != 3:
                     # 8.5.3: update modetype=2 and change the image background
@@ -250,28 +266,56 @@ while True:
                         imgBackground[142:142+216, 915:915+216] = newImgFac
 
                         facultyGender = facultyInfo['gender']
+                        # studentGender = studentInfo['gender']
                         # greeting name
                         hour = int(datetime.now().hour)
                         if hour >= 0 and hour < 12:
                             if facultyGender == 'male':
-                                speak(f"Good Morning! {facultyInfo['name']} sir")
+                                speak(
+                                    f"Good Morning! {facultyInfo['name']} sir")
                             else:
-                                speak(f"Good Morning! {facultyInfo['name']} ma'am")
-
+                                speak(
+                                    f"Good Morning! {facultyInfo['name']} ma'am")
 
                         elif hour >= 12 and hour < 18:
                             if facultyGender == 'male':
-                                speak(f"Good Aftrnoon! {facultyInfo['name']} sir")
+                                speak(
+                                    f"Good Aftrnoon! {facultyInfo['name']} sir")
                             else:
-                                speak(f"Good Aftrnoon! {facultyInfo['name']} ma'am")
+                                speak(
+                                    f"Good Aftrnoon! {facultyInfo['name']} ma'am")
 
                         else:
                             if facultyGender == 'male':
-                                speak(f"Good Evening! {facultyInfo['name']} sir")
+                                speak(
+                                    f"Good Evening! {facultyInfo['name']} sir")
                             else:
-                                speak(f"Good Evening! {facultyInfo['name']} ma'am")
+                                speak(
+                                    f"Good Evening! {facultyInfo['name']} ma'am")
 
                         speak("Attendance successfull")
+
+                        # # greeting name
+                        # hour = int(datetime.now().hour)
+                        # if hour >= 0 and hour < 12:
+                        #     if studentGender == 'male':
+                        #         speak(f"Good Morning! {studentInfo['name']} sir")
+                        #     else:
+                        #         speak(f"Good Morning! {studentInfo['name']} ma'am")
+
+                        # elif hour >= 12 and hour < 18:
+                        #     if studentGender == 'male':
+                        #         speak(f"Good Aftrnoon! {studentInfo['name']} sir")
+                        #     else:
+                        #         speak(f"Good Aftrnoon! {studentInfo['name']} ma'am")
+
+                        # else:
+                        #     if studentGender == 'male':
+                        #         speak(f"Good Evening! {studentInfo['name']} sir")
+                        #     else:
+                        #         speak(f"Good Evening! {studentInfo['name']} ma'am")
+
+                        # speak("Attendance successfull")
 
                     counter += 1
 
